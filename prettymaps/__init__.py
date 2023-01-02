@@ -20,13 +20,13 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def fetch_by_radius(
-        query: Union[str, tuple[float, float]],
-        radius: int,  # Of what unit?
-        layers: Optional[dict[str, Any]]=None,  # TODO: Get the right typing here
-        style: Optional[dict[str, Any]]=None,  # TODO: Get the right typing here
-        preset: str="default",
-        circle: bool=False,
-        **kwargs
+    query: Union[str, tuple[float, float]],
+    radius: int,  # Of what unit?
+    layers: Optional[dict[str, Any]] = None,  # TODO: Get the right typing here
+    style: Optional[dict[str, Any]] = None,  # TODO: Get the right typing here
+    preset: str = "default",
+    circle: bool = False,
+    **kwargs,
 ):
     """
     Fetch data from OSM through a query and a radius.
@@ -55,7 +55,7 @@ def fetch_by_radius(
             constrained_layout=True,
             multiplot=False,
             show=False,
-            **kwargs
+            **kwargs,
         )
     except (osmnx._errors.EmptyOverpassResponse, ValueError):
         _LOGGER.error(f'Likely could not find "{query}". Ending.')
