@@ -40,20 +40,6 @@ from typing import Optional, Union, Tuple, List, Dict, Any, Iterable
 from shapely.geometry import Point, LineString, MultiLineString, Polygon, MultiPolygon, GeometryCollection, box
 from shapely.geometry.base import BaseGeometry
 
-#import vsketch
-
-
-class Subplot:
-    """
-    Class implementing a prettymaps Subplot. Attributes:
-    - query: prettymaps.plot() query
-    - kwargs: dictionary of prettymaps.plot() parameters
-    """
-
-    def __init__(self, query, **kwargs):
-        self.query = query
-        self.kwargs = kwargs
-
 
 @dataclass
 class Plot:
@@ -192,7 +178,6 @@ def plot_gdf(
     gdf: gp.GeoDataFrame,
     ax: matplotlib.axes.Axes,
     mode: str = 'matplotlib',
-    #vsk: Optional[vsketch.SketchClass] = None,
     vsk=None,
     palette: Optional[List[str]] = None,
     width: Optional[Union[dict, float]] = None,
@@ -208,8 +193,7 @@ def plot_gdf(
         layer (str): layer name
         gdf (gp.GeoDataFrame): GeoDataFrame
         ax (matplotlib.axes.Axes): matplotlib axis object
-        mode (str): drawing mode. Options: 'matplotlib', 'vsketch'. Defaults to 'matplotlib'
-        vsk (Optional[vsketch.SketchClass]): Vsketch object. Mandatory if mode == 'plotter'
+        mode (str): drawing mode. Options: 'matplotlib'. Defaults to 'matplotlib'
         palette (Optional[List[str]], optional): Color palette. Defaults to None.
         width (Optional[Union[dict, float]], optional): Street widths. Either a dictionary or a float. Defaults to None.
         union (bool, optional): Whether to join geometries. Defaults to False.
@@ -817,8 +801,6 @@ def plot(
     constrained_layout=True,
     # Credit message parameters
     credit={},
-    # Mode ('matplotlib' or 'plotter')
-    mode='matplotlib',
     # Multiplot mode
     multiplot=False,
     # Whether to display matplotlib
@@ -856,8 +838,6 @@ def plot(
         Matplotlib axes
     title: String
         (Optional) Title for the Matplotlib figure
-    vsketch: Vsketch
-        (Optional) Vsketch object for pen plotting
     x: float
         (Optional) Horizontal displacement
     y: float
@@ -886,7 +866,7 @@ def plot(
     )
 
     # 2. Init matplotlib figure
-    if (mode == "matplotlib") and (ax is None):
+    if ax is None:
         fig = plt.figure(figsize=figsize)
         ax = plt.subplot(111, aspect='equal')
 
@@ -907,51 +887,17 @@ def plot(
     background, xmin, ymin, xmax, ymax, dx, dy = create_background(gdfs, style)
 
     # 8. Draw layers
-    if mode == "plotter":
-        # 8.1. Draw layers in plotter (vsketch) mode
-        '''
-        class Sketch(vsketch.SketchClass):
-
-            def draw(self, vsk: vsketch.Vsketch):
-
-                vsk.size("a4", landscape=True)
-
-                for layer in gdfs:
-                    if layer in layers:
-                        plot_gdf(
-                            layer,
-                            gdfs[layer],
-                            ax,
-                            width=layers[layer]["width"]
-                            if "width" in layers[layer]
-                            else None,
-                            mode=mode,
-                            vsk=vsk,
-                            **(style[layer] if layer in style else {}),
-                        )
-
-                if save_as:
-                    vsk.save(save_as)
-
-            def finalize(self, vsk: vsketch.Vsketch):
-                vsk.vpype("linemerge linesimplify reloop linesort")
-
-        sketch = Sketch()
-        sketch.display()
-        '''
-    elif mode == "matplotlib":
-        # 8.2. Draw layers in matplotlib mode
-        for layer in gdfs:
-            if layer in layers:
-                plot_gdf(
-                    layer,
-                    gdfs[layer],
-                    ax,
-                    width=layers[layer]["width"] if "width" in layers[layer] else None,
-                    **(style[layer] if layer in style else {}),
-                )
-    else:
-        raise Exception(f'Unknown mode {mode}')
+    for layer in gdfs:
+        if layer in layers:
+            plot_gdf(
+                layer,
+                gdfs[layer],
+                ax,
+                width=layers[layer]["width"] if "width" in layers[layer] else None,
+                **(style[layer] if layer in style else {}),
+            )
+        else:
+            raise Exception(f'Unknown mode {mode}')
 
     # 9. Draw background
     if "background" in style:
@@ -961,24 +907,23 @@ def plot(
             background, **style["background"], zorder=zorder))
 
     # 10. Draw credit message
-    if (mode == "matplotlib") and (credit != False) and (not multiplot):
+    if (credit != False) and (not multiplot):
         draw_text(credit, background)
 
     # 11. Ajust figure and create PIL Image
-    if mode == "matplotlib":
-        # Adjust axis
-        ax.axis("off")
-        ax.axis("equal")
-        ax.autoscale()
-        # Adjust padding
-        plt.subplots_adjust(
-            left=0, bottom=0, right=1, top=1, wspace=0, hspace=0
-        )
-        # Save result
-        if save_as:
-            plt.savefig(save_as)
-        if not show:
-            plt.close()
+    # Adjust axis
+    ax.axis("off")
+    ax.axis("equal")
+    ax.autoscale()
+    # Adjust padding
+    plt.subplots_adjust(
+        left=0, bottom=0, right=1, top=1, wspace=0, hspace=0
+    )
+    # Save result
+    if save_as:
+        plt.savefig(save_as)
+    if not show:
+        plt.close()
 
     return Plot(gdfs, fig, ax, background)
 
